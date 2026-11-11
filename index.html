@@ -213,6 +213,15 @@
     transform: scale(.8) translateY(20px); transition: transform .8s cubic-bezier(.2,1.4,.4,1);
   }
   .message.show .card { transform: none; }
+  .card { position: relative; }
+  .close {
+    position: absolute; top: 10px; right: 10px; width: 36px; height: 36px;
+    display: grid; place-items: center; padding: 0;
+    font: 400 24px/1 "Inter", sans-serif; color: #1f2a3c;
+    background: transparent; border: 0; border-radius: 50%; cursor: pointer;
+    opacity: .6; transition: opacity .15s, background .15s;
+  }
+  .close:hover, .close:focus-visible { opacity: 1; background: rgba(31, 42, 60, .08); }
   .card h2 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: clamp(30px, 8vw, 42px); margin: 0 0 12px; color: #1f2a3c; }
   .card p { font-size: 17px; line-height: 1.55; margin: 0 0 22px; }
   .card .emoji { font-size: 40px; margin-bottom: 6px; }
@@ -239,11 +248,13 @@
     <p class="status" id="status"></p>
     <div class="controls">
       <button class="btn" id="micBtn">🎤 Blow with microphone</button>
+      <button class="btn" id="showMsg" hidden>Show message</button>
     </div>
   </main>
 
   <div class="message" id="message" role="dialog" aria-live="polite">
     <div class="card">
+      <button class="close" id="closeMsg" aria-label="Close message">&times;</button>
       <div class="emoji">🎂</div>
       <h2 id="msgTitle">Happy Birthday!</h2>
       <p id="msgText">Here's to another great year. Wishing you good health, big wins, and plenty of reasons to celebrate. Hope your wish comes true.</p>
@@ -433,8 +444,27 @@
     setTimeout(() => { message.classList.add("show"); startConfetti(); }, 900);
   }
 
+  // closing the card leaves the blown-out cake on screen, with a way back to the message
+  const micBtnEl = document.getElementById("micBtn");
+  const showMsg = document.getElementById("showMsg");
+  function closeMessage() {
+    if (!message.classList.contains("show")) return;
+    message.classList.remove("show");
+    micBtnEl.hidden = true;
+    showMsg.hidden = false;
+  }
+  document.getElementById("closeMsg").addEventListener("click", closeMessage);
+  message.addEventListener("click", e => { if (e.target === message) closeMessage(); });
+  addEventListener("keydown", e => { if (e.key === "Escape") closeMessage(); });
+  showMsg.addEventListener("click", () => {
+    message.classList.add("show");
+    showMsg.hidden = true;
+  });
+
   document.getElementById("relight").addEventListener("click", () => {
     message.classList.remove("show");
+    showMsg.hidden = true;
+    micBtnEl.hidden = false;
     stopConfetti();
     finished = false;
     candles.forEach(c => { c.classList.remove("out"); c.classList.add("unlit"); });
